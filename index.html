@@ -318,10 +318,11 @@ body.congregation-mode .cong-view { display:flex !important; }
       <p style="font-family:'Cinzel Decorative',serif;font-size:15px;color:var(--gold);letter-spacing:1px;">LIVE BROADCAST ROOM</p>
       <p style="font-size:12px;color:rgba(245,240,232,0.5);max-width:270px;line-height:1.8;">Tap <strong style="color:var(--gold)">START LIVE</strong>.<br>Jitsi opens for your camera.<br>Congregation link is generated &mdash; share on WhatsApp.<br><span style="font-size:10px;color:rgba(245,240,232,0.3);">They see you + ads in one tab.</span></p>
       <div id="site-url-setup" style="width:100%;max-width:320px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);border-radius:10px;padding:12px 14px;">
-        <p style="font-size:10px;color:var(--gold);font-weight:800;letter-spacing:1px;margin-bottom:5px;">&#9881;&#65039; YOUR SITE URL (set once)</p>
-        <input id="site-url-input" type="url" placeholder="https://nicolearmstrong1.github.io/Re" style="width:100%;background:var(--mid);border:1px solid rgba(201,168,76,0.3);color:var(--white);padding:8px 10px;border-radius:6px;font-size:11px;font-family:Montserrat,sans-serif;margin-bottom:7px;box-sizing:border-box;">
+        <p style="font-size:10px;color:var(--gold);font-weight:800;letter-spacing:1px;margin-bottom:3px;">&#9881;&#65039; CONGREGATION LINK BASE URL</p>
+        <p style="font-size:9px;color:rgba(245,240,232,0.5);margin-bottom:6px;">This is auto-filled. Only change if you want members to always use a different repo URL.</p>
+        <input id="site-url-input" type="url" placeholder="https://nicolearmstrong1.github.io/Praise" style="width:100%;background:var(--mid);border:1px solid rgba(201,168,76,0.3);color:var(--white);padding:8px 10px;border-radius:6px;font-size:11px;font-family:Montserrat,sans-serif;margin-bottom:7px;box-sizing:border-box;">
         <button id="save-url-btn" style="background:var(--gold);color:#000;border:none;padding:7px;border-radius:5px;font-size:11px;font-weight:800;cursor:pointer;font-family:Montserrat,sans-serif;width:100%;">&#128190; Save URL</button>
-        <p id="url-saved-msg" style="font-size:10px;color:#00cc00;margin-top:5px;display:none;">&#10003; Saved!</p>
+        <p id="url-saved-msg" style="font-size:10px;color:#00cc00;margin-top:5px;display:none;">&#10003; Saved! Congregation links will use this URL.</p>
       </div>
       <button class="btn-golive" id="btn-join-jitsi" style="font-size:14px;padding:14px 32px;">&#128308; START LIVE NOW</button>
       <a id="jitsi-direct-link" href="#" target="_blank" style="display:none;color:var(--gold);font-size:11px;margin-top:4px;font-weight:700;">&#128279; Tap here if Jitsi didn't open</a>
@@ -768,13 +769,15 @@ function unpinMpesa() {
 // ============================
 function startJitsi() {
   var ts = Date.now().toString(36).toUpperCase();
-  jitsiRoomName = "LBV" + ts;
+  jitsiRoomName = "LBVMQ" + ts;
 
-  var savedURL = "";
-  try { savedURL = localStorage.getItem("lb_site_url") || ""; } catch(e) {}
-  var baseURL = savedURL || window.location.href.split("?")[0];
-  if(baseURL.endsWith("/")) baseURL = baseURL.slice(0,-1);
-  if(baseURL.indexOf("?") > -1) baseURL = baseURL.split("?")[0];
+  // Always use the current page URL as the congregation base
+  // This ensures the congregation link works regardless of which repo is hosting
+  var baseURL = window.location.href.split("?")[0].replace(/\/+$/, "");
+  try {
+    var saved = localStorage.getItem("lb_site_url");
+    if(saved && saved.trim()) baseURL = saved.trim().replace(/\/+$/, "");
+  } catch(e) {}
   var congregationURL = baseURL + "?congregation=" + jitsiRoomName;
   var jitsiURL = "https://8x8.vc/vpaas-magic-cookie-2f0d7d909f9942149bafa54e08bf84a5/" + jitsiRoomName
     + "#config.prejoinPageEnabled=false"
@@ -1696,14 +1699,17 @@ function init(){
   // Cache ad images FIRST (before any elements might be hidden)
   cacheAdImages();
 
-  // Site URL setup
+  // Site URL setup — auto-fill with current page URL if nothing saved
   try {
     var savedURL = localStorage.getItem("lb_site_url") || "";
     var urlInput = document.getElementById("site-url-input");
-    if(urlInput && savedURL) {
-      urlInput.value = savedURL;
-      var savedMsg = document.getElementById("url-saved-msg");
-      if(savedMsg) savedMsg.style.display = "block";
+    if(urlInput) {
+      var autoURL = window.location.href.split("?")[0].replace(/\/+$/, "");
+      urlInput.value = savedURL || autoURL;
+      if(savedURL) {
+        var savedMsg = document.getElementById("url-saved-msg");
+        if(savedMsg) savedMsg.style.display = "block";
+      }
     }
   } catch(e) {}
   var saveURLBtn = document.getElementById("save-url-btn");
